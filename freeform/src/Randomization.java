@@ -198,7 +198,7 @@ public class Randomization {
         for(int i=0; i<k; i++){
             //System.out.println("round " + i +":");
             for (int j=0; j<size; j++){
-                int match = final_assignment[offset+j][i] - offset;
+                int match = final_assignment[j][i];
                 nodeList.get(j).getAllOutgoing().add(nodeList.get(match));
             }
         }

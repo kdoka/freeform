@@ -85,8 +85,9 @@ public class TopCoderAlgo {
 	        }
 	}
 	
-	void augment(double[][] cost)                         //main function of the algorithm
+	void augment (double[][] cost)                         //main function of the algorithm
 	{
+		try{
 	    if (max_match == n) return;        //check wether matching is already perfect
 	    int x, y, root=-1;  
 	    int[] q = new int[n];//just counters and root vertex
@@ -171,6 +172,11 @@ public class TopCoderAlgo {
 	        }
 	        augment(cost);                                                      //recall function, go to step 1 of the algorithm
 	    }
+		}catch (Exception e){
+			System.err.println("Exception: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}//end of augment() function 
+	
 
 }
