@@ -644,72 +644,7 @@ public class SortGreedy {
 		return cost;
 	}
 
-	private static void recomputeCostMatrix(double[][] array, int times) {
-		long cost_start = System.currentTimeMillis();
-		double c;
-		HeapNode hn;
-		int newIndex=0;
-		for (int index = 0; index<edge_size; index++){
-			hn = edges[index];
-			int i = hn.getI();
-			int j = hn.getJ();
-
-			if (final_assignment[offset+i][times]==j){
-				array[i][j]=BIG;
-			}
-			else{
-				if (MIXED){
-					c=NCP_mixed(map[offset+j], MinMaxPerAssign[i],distinctValuesPerAssign[i]);
-					array[i][j]=c;
-					hn.cost = c;
-				}else
-					if (RANGE){
-						c = NCP_numerical(map[offset+j], MinMaxPerAssign[i]);
-						array[i][j]=c;
-						hn.cost = c;
-					}
-					else{
-						c = NCP(map[offset+j], (distinctValuesPerAssign[i]));
-						array[i][j]=c;
-						hn.cost = c;
-					}
-				edges[newIndex++]=hn;
-				/*int count = newIndex;
-				  while ((count > 0) ){
-					 if (edges[count-1].getCost() > hn.getCost()){
-						 edges[count]=edges[count-1];
-						 count--;
-					 }
-					 else
-						 break;
-				  }
-
-				edges[count]=hn;
-				++newIndex;
-				System.out.println(newIndex);*/
-
-			}
-		}
-		//edge_size-=chunk_size;
-		/*for (int i = 1; i < edge_size; i++){
-			int j = i;
-			HeapNode B = edges[i];
-			while ((j > 0) && (edges[j-1].getCost() > B.getCost())){
-				edges[j] = edges[j-1];
-				j--;
-			}
-			edges[j] = B;
-		}*/
-		
-		
-		cost_matrix_time+=System.currentTimeMillis()-cost_start;
-		edge_size-=chunk_size;
-		//Smooth.sort(edges, 0, edge_size-1);
-		
-	}
-
-
-
+	
 	private static void recomputeCostMatrix2(double[][] array, int times) {
 		long cost_start = System.currentTimeMillis();
 		edge_size=0;

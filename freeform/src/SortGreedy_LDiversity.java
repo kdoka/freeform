@@ -465,15 +465,8 @@ public class SortGreedy_LDiversity {
 		//-------needed for greedy algorithms-------------
 		dimension_sort();
 		//-------needed for greedy algorithms-------------
-		
-		//Below enter "max" or "min" to find maximum sum or minimum sum assignment.
-		String sumType = "min";
-
 		final_assignment = new int[tuples][l_param];
 
-		long matchTime = System.currentTimeMillis();
-		long time_of_hungarian = 0;
-		long start_of_hungarian = 0;
 		double distortion = 0.0;
 		bucket_size = bk.bucketSize;
 		int chunk_size;
@@ -498,7 +491,8 @@ public class SortGreedy_LDiversity {
 				for (int chunk_index=0; chunk_index<chunk_sizes.size(); chunk_index++){
 					chunk_size = chunk_sizes.get(chunk_index);
 
-					edges = new HeapNode[chunk_size*chunk_size*2];
+					//edges = new HeapNode[chunk_size*chunk_size*2];
+					edges = new HeapNode[chunk_size*chunk_size];
 					
 					//we need SA, too!
 					if (MIXED){
@@ -518,13 +512,10 @@ public class SortGreedy_LDiversity {
 					int times = 0;
 					
 					while (++times<l_param){
-						//start_of_hungarian = System.currentTimeMillis();
-						//algo.hungarian(array, assignment);
-						qSort(0, chunk_size*chunk_size-1);
-						greedyAssign(array, assignment, chunk_size);//Call Hungarian algorithm.
-						//time_of_hungarian+=(System.currentTimeMillis() - start_of_hungarian);
+						//qSort(0, chunk_size*chunk_size-1);
+						qSort(0, edge_size-1);
+						greedyAssign(array, assignment, chunk_size);//Call SortGreedy algorithm.
 						
-						//System.out.println("time "+times);
 						for (int i=0; i<assignment.length; i++){
 							final_assignment[i+chunk_offset+bucket_index*bucket_size][times] = bucketToIndexMapping((bucket_index+times)%l_param,(chunk_offset+assignment[i]));
 							if (MIXED){
@@ -554,8 +545,8 @@ public class SortGreedy_LDiversity {
 		}else{ //No partitioning:
 			for (int bucket_index=0; bucket_index<l_param; bucket_index++){
 				
-				edges = new HeapNode[bucket_size*bucket_size*2];
-				
+				//edges = new HeapNode[bucket_size*bucket_size*2];
+				edges = new HeapNode[bucket_size*bucket_size];
 				//we need SA, too!
 				if (MIXED){
 					MinMaxPerAssign = new int[bucket_size][dims-1][2];
@@ -575,13 +566,10 @@ public class SortGreedy_LDiversity {
 				int times = 0;
 				
 				while (++times<l_param){
-					//start_of_hungarian = System.currentTimeMillis();
-					//algo.hungarian(array, assignment);
-					qSort(0, bucket_size*bucket_size-1);
-					greedyAssign(array, assignment, bucket_size);//Call Hungarian algorithm.
-					//time_of_hungarian+=(System.currentTimeMillis() - start_of_hungarian);
+					//qSort(0, bucket_size*bucket_size-1);
+					qSort(0, edge_size-1);
+					greedyAssign(array, assignment, bucket_size);//Call SortGreedy algorithm.
 					
-					//System.out.println("time "+times);
 					for (int i=0; i<assignment.length; i++){
 						final_assignment[i+bucket_index*bucket_size][times] = bucketToIndexMapping((bucket_index+times)%l_param, assignment[i]);
 						if (MIXED){
@@ -630,7 +618,7 @@ public class SortGreedy_LDiversity {
 		//Save Results:
 		FileWriter fw = null;
 		try{
-			fw = new FileWriter("./GreedyResults.txt",true); //true == append
+			fw = new FileWriter("./SortGreedyResults.txt",true); //true == append
 			fw.write(tuples+" "+l_param+" ");
 			if((partition_function == 0) || (partition_function == 1)){
 				fw.write(partition_size+" ");
@@ -671,9 +659,8 @@ public class SortGreedy_LDiversity {
 					cost[i][j]=BIG;
 				}
 				HeapNode hn = new HeapNode(i,j,c);
-				HeapNode hn2 = new HeapNode(j,i,c);
 				edges[edge_size++]=hn;
-				edges[edge_size++]=hn2;
+				
 			}
 			final_assignment[offset+first+i][0]= offset+first+i;
 			if (MIXED){
@@ -709,22 +696,24 @@ public class SortGreedy_LDiversity {
 	}
 
 	private static void recomputeCostMatrix(double[][] array, int bucket_index, int first, int size) {
+		edge_size=0;
+		
 		for (int i=0; i<size; i++){
 			for (int j=0; j<size; j++){
 				if (MIXED){
 					array[i][j]=NCP_mixed(buckets[bucket_index][first+j], MinMaxPerAssign[i],
 										  distinctValuesPerAssign[i]);
 					HeapNode hn = new HeapNode(i,j,(array[i][j]));
-					edges[i*size+j]=hn;
+					edges[edge_size++]=hn;
 				}else if (RANGE){
 					array[i][j]=NCP_numerical(buckets[bucket_index][first+j], MinMaxPerAssign[i],
 												  distinctValues1[i]);
 					HeapNode hn = new HeapNode(i,j,(array[i][j]));
-					edges[i*size+j]=hn;
+					edges[edge_size++]=hn;
 				}else{
 					array[i][j]=NCP(buckets[bucket_index][first+j], (distinctValuesPerAssign[i]));
 					HeapNode hn = new HeapNode(i,j,(array[i][j]));
-					edges[i*size+j]=hn;
+					edges[edge_size++]=hn;
 				}
 			}
 		}
