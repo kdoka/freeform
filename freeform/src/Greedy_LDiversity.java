@@ -35,7 +35,7 @@ public class Greedy_LDiversity {
 	static int[][] final_assignment;// = new int[tuples][k];
 	static LinkedList<Integer> chunk_sizes = new LinkedList<Integer>();
 	static HeapNode[] edges;
-	static int edge_size;
+	static int edge_size=0;
 	static HeapNode root;
 
 	//*******************************************//
@@ -43,7 +43,6 @@ public class Greedy_LDiversity {
 		//*******************************************//
 		
 	private static int[] greedyAssign(double[][] array, int[] assignment, int chunk_size) {
-		long backtrace_start = System.currentTimeMillis();
 		int[] jToi = new int[chunk_size];
 		Arrays.fill(assignment, -1);
 		Arrays.fill(jToi, -1);
@@ -75,29 +74,7 @@ public class Greedy_LDiversity {
 									swap_done = true;
 									break;
 								}
-							}
-							/*for (int step2 = 1; step2<chunk_size/2; step2++){
-								int l = (chunk_size+possible_j-step2)%chunk_size;			
-
-								if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-									assignment[index]=possible_j;
-									assignment[possible_i]=l;
-									jToi[l]=possible_i;
-									jToi[possible_j]=index;
-									swap_done = true;
-									break;
-								}
-
-								l=(possible_j+step2)%chunk_size;
-								if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-									assignment[index]=possible_j;
-									assignment[possible_i]=l;
-									jToi[l]=possible_i;
-									jToi[possible_j]=index;
-									swap_done = true;
-									break;
-								}
-							}	*/
+							}	
 						}
 					}
 					if (swap_done)
@@ -117,28 +94,6 @@ public class Greedy_LDiversity {
 										break;
 									}
 								}
-								/*for (int step2 = 1; step2<chunk_size/2; step2++){
-									int l = (chunk_size+possible_j-step2)%chunk_size;			
-
-									if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-										assignment[index]=possible_j;
-										assignment[possible_i]=l;
-										jToi[l]=possible_i;
-										jToi[possible_j]=index;
-										swap_done = true;
-										break;
-									}
-
-									l=(possible_j+step2)%chunk_size;
-									if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-										assignment[index]=possible_j;
-										assignment[possible_i]=l;
-										jToi[l]=possible_i;
-										jToi[possible_j]=index;
-										swap_done = true;
-										break;
-									}
-								}*/	
 							}
 						}
 					}
@@ -480,7 +435,7 @@ public class Greedy_LDiversity {
 		if (partition_function == 0)
 			bucket_partition(bucket_size, bk); //keep all SAs distrubutions.
 		else if (partition_function == 1){
-			bucket_partition2(bucket_size, bk); //only keep 1st SA distribution.
+			bucket_partition2(bucket_size, bk); //only keep 1st SA distribution.		
 		} //else NO_PARTITION //default.
 		System.gc();
 		//bk.printBuckets();
@@ -494,7 +449,7 @@ public class Greedy_LDiversity {
 					chunk_size = chunk_sizes.get(chunk_index);
 
 					//edges = new HeapNode[chunk_size*chunk_size*2];
-					edges = new HeapNode[chunk_size*chunk_size-chunk_size];
+					edges = new HeapNode[chunk_size*chunk_size];
 					
 					//we need SA, too!
 					if (MIXED){
@@ -517,7 +472,7 @@ public class Greedy_LDiversity {
 					
 					while (++times<l_param){
 						
-						qSort(0,chunk_size*chunk_size-chunk_size-1);//Collections.sort(edges, new HeapComparator());
+						qSort(0,edge_size-1);//Collections.sort(edges, new HeapComparator());
 						edges[0].setPred(null);
 						edges[0].setSuc(edges[1]);
 						for (int i = 1; i<edges.length-1; i++){
@@ -528,12 +483,8 @@ public class Greedy_LDiversity {
 						edges[edges.length-1].setSuc(null);
 						root = edges[0];
 						
-						greedyAssign(array, assignment, chunk_size);//Call Hungarian algorithm.
+						greedyAssign(array, assignment, chunk_size);//Call Greedy algorithm.
 						
-						
-						//time_of_hungarian+=(System.currentTimeMillis() - start_of_hungarian);
-						
-						//System.out.println("time "+times);
 						for (int i=0; i<assignment.length; i++){
 							final_assignment[i+chunk_offset+bucket_index*bucket_size][times] = bucketToIndexMapping((bucket_index+times)%l_param,(chunk_offset+assignment[i]));
 							if (MIXED){
@@ -563,7 +514,8 @@ public class Greedy_LDiversity {
 		}else{ //No partitioning:
 			for (int bucket_index=0; bucket_index<l_param; bucket_index++){
 				
-				edges = new HeapNode[bucket_size*bucket_size*2];
+				quickSortBucket(0, bucket_size-1, bucket_index); //needed only for the Greedy algorithm
+				edges = new HeapNode[bucket_size*bucket_size];
 				
 				//we need SA, too!
 				if (MIXED){
@@ -584,13 +536,18 @@ public class Greedy_LDiversity {
 				int times = 0;
 				
 				while (++times<l_param){
-					//start_of_hungarian = System.currentTimeMillis();
-					//algo.hungarian(array, assignment);
-					qSort(0, bucket_size*bucket_size-1);
+					qSort(0, edge_size-1);
+					edges[0].setPred(null);
+					edges[0].setSuc(edges[1]);
+					for (int i = 1; i<edges.length-1; i++){
+						edges[i].setPred(edges[i-1]);
+						edges[i].setSuc(edges[i+1]);
+					}
+					edges[edges.length-1].setPred(edges[edges.length-2]);
+					edges[edges.length-1].setSuc(null);
+					root = edges[0];
 					greedyAssign(array, assignment, bucket_size);//Call Hungarian algorithm.
-					//time_of_hungarian+=(System.currentTimeMillis() - start_of_hungarian);
 					
-					//System.out.println("time "+times);
 					for (int i=0; i<assignment.length; i++){
 						final_assignment[i+bucket_index*bucket_size][times] = bucketToIndexMapping((bucket_index+times)%l_param, assignment[i]);
 						if (MIXED){
@@ -662,7 +619,6 @@ public class Greedy_LDiversity {
 
 	private static double[][] computeCostMatrix(short[][] in1, short[][] in2, int offset, int first, int size) {
 		edge_size = 0;
-
 		double[][] cost = new double[size][size];
 		for (int i=0; i<size; i++){
 			for (int j=0; j<size; j++){
@@ -680,9 +636,9 @@ public class Greedy_LDiversity {
 					cost[i][j]=BIG;
 				}
 				HeapNode hn = new HeapNode(i,j,c);
-				HeapNode hn2 = new HeapNode(j,i,c);
+				//HeapNode hn2 = new HeapNode(j,i,c);
 				edges[edge_size++]=hn;
-				edges[edge_size++]=hn2;
+				//edges[edge_size++]=hn2;
 			}
 			final_assignment[offset+first+i][0]= offset+first+i;
 			if (MIXED){
@@ -718,25 +674,57 @@ public class Greedy_LDiversity {
 	}
 
 	private static void recomputeCostMatrix(double[][] array, int bucket_index, int first, int size) {
-		for (int i=0; i<size; i++){
-			for (int j=0; j<size; j++){
+		HeapNode hn;
+		double c;
+		//HeapNode old;
+		for (int index = 0; index<edges.length; index++){
+			//while (hn!=null){
+			hn = edges[index];
+			int i = hn.getI();
+			int j = hn.getJ();
+
+			
+
 				if (MIXED){
-					array[i][j]=NCP_mixed(buckets[bucket_index][first+j], MinMaxPerAssign[i],
-										  distinctValuesPerAssign[i]);
-					HeapNode hn = new HeapNode(i,j,(array[i][j]));
-					edges[i*size+j]=hn;
-				}else if (RANGE){
-					array[i][j]=NCP_numerical(buckets[bucket_index][first+j], MinMaxPerAssign[i],
-												  distinctValues1[i]);
-					HeapNode hn = new HeapNode(i,j,(array[i][j]));
-					edges[i*size+j]=hn;
-				}else{
-					array[i][j]=NCP(buckets[bucket_index][first+j], (distinctValuesPerAssign[i]));
-					HeapNode hn = new HeapNode(i,j,(array[i][j]));
-					edges[i*size+j]=hn;
+					c=NCP_mixed(buckets[bucket_index][first+j], MinMaxPerAssign[i],
+							  distinctValuesPerAssign[i]);
+					array[i][j]=c;
+					hn.cost = c;
+				}else
+					if (RANGE){
+						c = NCP_numerical(buckets[bucket_index][first+j], MinMaxPerAssign[i],
+								  distinctValues1[i]);
+						array[i][j]=c;
+						hn.cost = c;
+					}
+					else{
+						c = NCP(buckets[bucket_index][first+j], (distinctValuesPerAssign[i]));
+						array[i][j]=c;
+						hn.cost = c;
+					}
+				HeapNode insSort = hn;
+				boolean need_swap = false;
+				while (insSort.getPred()!=null){
+					if (hn.getCost()<insSort.getPred().getCost()){
+						insSort = insSort.getPred();
+						need_swap = true;
+					}
+					else
+						break;
+				}
+				if (need_swap){
+					if (hn.getPred()!=null)
+						hn.getPred().setSuc(hn.getSuc());
+					if (hn.getSuc()!=null)
+						hn.getSuc().setPred(hn.getPred());
+					hn.setPred(insSort.getPred());
+					if (insSort.getPred()!=null)
+						insSort.getPred().setSuc(hn);
+					hn.setSuc(insSort);
+					insSort.setPred(hn);
+					
 				}
 			}
-		}
 	}
 
 	///////////////////Mixed Representation//////////////	
