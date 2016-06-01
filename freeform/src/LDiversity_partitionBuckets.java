@@ -86,9 +86,9 @@ public class LDiversity_partitionBuckets {
 			dimension[i] = (byte) i;
 		}
 		for (int i = 0; i < dims; i++) { // small domain, use bubble sort
-			if (i != SA){ //sort all except SA!!!
+			if (i != dims-1){ //sort all except SA!!!
 				for (int j = 0; j < dims-i-1;j++) { // smaller range, put it the front
-					if (j != SA){ //sort all except SA!!!
+					if (j != dims-1){ //sort all except SA!!!
 						if (cardinalities[dimension[j]] > cardinalities[dimension[j+1]]) {
 							byte temp = dimension[j];
 							dimension[j] = dimension[j+1];
@@ -103,7 +103,7 @@ public class LDiversity_partitionBuckets {
 	// return true if data x > data y
 	public static boolean compare_data(short[] x, short[] y) {
 		for (int i = 0;i < dims;i++) {
-			if (i != SA){ //compare w.r.t. all except SA!!!
+			if (i != dims-1){ //compare w.r.t. all except SA!!!
 				if (x[dimension[i]] > y[dimension[i]]) {
 					/*if (map[x][dimension[0]]<map[y][dimension[0]])
 					 System.out.println("oops");*/
@@ -287,10 +287,11 @@ public class LDiversity_partitionBuckets {
 
 	public static void main(String[] args) 	{
 
-		if (args.length!=6){
+		if (args.length!=7){
 			System.out.println("\nUsage:   java LDiversity inFile n SA l part_size part_option");
 			System.out.println("\t inFile: input file name (path included).");
 			System.out.println("\t n: number of tuples in inFile.");
+			System.out.println("\t d: dimensionality of the dataset.");
 			System.out.println("\t SA: index of sensitive attribute [0-7].");
 			System.out.println("\t l: diversity parameter [number of buckets].");
 			System.out.println("\t part_size: size of the bucket partitions.");
@@ -302,10 +303,11 @@ public class LDiversity_partitionBuckets {
 
 		String inputFile = args[0];
 		tuples = Integer.parseInt(args[1]);  // n
-		SA = Integer.parseInt(args[2]); //Sensitive Attribute (0 - 7).
-		l_param = Integer.parseInt(args[3]); // l
-		partition_size = Integer.parseInt(args[4]);
-		partition_function = Integer.parseInt(args[5]);
+		dims = Integer.parseInt(args[2]); //d
+		SA = Integer.parseInt(args[3]); //Sensitive Attribute (0 - 7).
+		l_param = Integer.parseInt(args[4]); // l
+		partition_size = Integer.parseInt(args[5]);
+		partition_function = Integer.parseInt(args[6]);
 
 		int modl = (tuples % l_param);
 		if (modl > 0){
@@ -319,7 +321,7 @@ public class LDiversity_partitionBuckets {
 
 		long startTime = System.currentTimeMillis();
 		try {
-			CensusParser tp = new CensusParser(inputFile, dims);
+			CensusParserL tp = new CensusParserL(inputFile, dims, SA);
 			int i=0;
 			while (tp.hasNext()){
 				map[i++]=tp.nextTuple2();
@@ -332,7 +334,7 @@ public class LDiversity_partitionBuckets {
 			//add dummy tuples:
 			for(int i=(tuples-(l_param-modl)); i<tuples; i++){
 				for(int j=0; j<dims; j++){
-					if (j == SA){
+					if (j == dims-1){
 						map[i][j] = -1; //unique SA
 					}else{
 						map[i][j] = 0;
@@ -344,7 +346,7 @@ public class LDiversity_partitionBuckets {
 		long midTime = System.currentTimeMillis();
 
 		FastBuckets bk = new FastBuckets(l_param, tuples, dims, map, buckets);
-		buckets = bk.bucketization(SA);
+		buckets = bk.bucketization(dims-1);
 		//bk.printBuckets();
 
 		long bucketEndTime = System.currentTimeMillis();
@@ -561,7 +563,7 @@ public class LDiversity_partitionBuckets {
 			//we need SA, too!
 			if (MIXED){
 				for (int l=0; l<dims; l++){
-					if (l==0||l==2){
+					if (l==0||(l==2&&dims!=3)){
 						MinMaxPerAssign[i][l][0]=in1[first+i][l];
 						MinMaxPerAssign[i][l][1]=in1[first+i][l];
 					}else{
@@ -578,7 +580,7 @@ public class LDiversity_partitionBuckets {
 						MinMaxPerAssign[i][l][1]=in1[first+i][l];
 					}
 					LinkedList<Integer> list = new LinkedList<Integer>();
-					list.add((int) in1[first+i][SA]);
+					list.add((int) in1[first+i][dims-1]);
 					distinctValues1[i] = list;
 				}else{
 					for (int l=0; l<dims; l++){
@@ -615,11 +617,11 @@ public class LDiversity_partitionBuckets {
 	private static double NCP_mixed(short[] tuple1, short[] tuple2){
 		double score=0.0;
 		
-		if (tuple1[SA] == tuple2[SA])
+		if (tuple1[dims-1] == tuple2[dims-1])
 			return BIG; //inf
 		
 		for (int i=0; i<dims-1; i++){
-			if (i==0 || i==2){
+			if (i==0 || (i==2&&dims!=3)){
 				score+=(double)Math.abs(tuple1[i]-tuple2[i])/(double)(cardinalities[i]-1);
 			}else{
 				if (tuple1[i]==tuple2[i])
@@ -636,12 +638,12 @@ public class LDiversity_partitionBuckets {
 		int min;
 		int max;
 		
-		LinkedList<Integer> distinctValues2 = distinctValuesPerDim[SA];
-		if (distinctValues2.contains((int)tuple[SA]))
+		LinkedList<Integer> distinctValues2 = distinctValuesPerDim[dims-1];
+		if (distinctValues2.contains((int)tuple[dims-1]))
 			return BIG; //inf
 		
 		for (int i=0; i<dims-1; i++){
-			if (i==0 || i==2){
+			if (i==0 || (i==2&&dims!=3)){
 				int[] distinctValues = MinMaxPerDim[i];
 				min = distinctValues[0];
 				max = distinctValues[1];
@@ -665,7 +667,7 @@ public class LDiversity_partitionBuckets {
 		double score=0.0;
 		
 		for (int i=0; i<dims-1; i++){
-			if (i==0 || i==2){
+			if (i==0 || (i==2&&dims!=3)){
 				int[] distinctValues = MinMaxPerDim[i];
 				score+=(double)(distinctValues[1]-distinctValues[0])/(double)(cardinalities[i]-1);
 			}else{
@@ -681,7 +683,7 @@ public class LDiversity_partitionBuckets {
 		int[][] MinMaxPerDim = MinMaxPerAssign[assign_number];
 
 		for (int i=0; i<dims; i++){ //we need SA, too!
-			if (i==0 || i==2){
+			if (i==0 || (i==2&&dims!=3)){
 				int[] distinctValues = MinMaxPerDim[i];
 				if (newTuple[i] < distinctValues[0]){
 					distinctValues[0]=(int) newTuple[i];
@@ -705,7 +707,7 @@ public class LDiversity_partitionBuckets {
 	private static double NCP_numerical(short[] tuple1, short[] tuple2){
 		double score=0.0;
 		
-		if (tuple1[SA] == tuple2[SA])
+		if (tuple1[dims-1] == tuple2[dims-1])
 			return BIG; //inf
 		
 		for (int i=0; i<dims-1; i++){
@@ -721,7 +723,7 @@ public class LDiversity_partitionBuckets {
 		int min;
 		int max;
 		
-		if (distinctValues2.contains((int)tuple[SA]))
+		if (distinctValues2.contains((int)tuple[dims-1]))
 			return BIG; //inf
 		
 		for (int i=0; i<dims-1; i++){
@@ -767,7 +769,7 @@ public class LDiversity_partitionBuckets {
 	private static double NCP(short[] tuple1, short[] tuple2){
 		double score=0.0;
 
-		if (tuple1[SA] == tuple2[SA])
+		if (tuple1[dims-1] == tuple2[dims-1])
 			return BIG; //inf
 
 		for (int i=0; i<dims-1; i++){
@@ -782,8 +784,8 @@ public class LDiversity_partitionBuckets {
 	private static double NCP(short[] tuple, LinkedList<Integer>[] distinctValuesPerDim){
 		double score=0.0;
 		
-		LinkedList<Integer> distinctValues2 = distinctValuesPerDim[SA];
-		if (distinctValues2.contains((int)tuple[SA]))
+		LinkedList<Integer> distinctValues2 = distinctValuesPerDim[dims-1];
+		if (distinctValues2.contains((int)tuple[dims-1]))
 			return BIG; //inf
 		
 		for (int i=0; i<dims-1; i++){
