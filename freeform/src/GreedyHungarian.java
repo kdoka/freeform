@@ -58,7 +58,8 @@ public class GreedyHungarian {
 					matchOrder[index++]=node.getI();
 				}else{
 					for (int l=index-1; l>=0; l--){
-						if (array[matchOrder[l]][node.getJ()]!=BIG && array[node.getI()][assignment[matchOrder[l]]]!=BIG){
+						if (array[matchOrder[l]][node.getJ()]!=BIG &&
+								array[node.getI()][assignment[matchOrder[l]]]!=BIG){
 							assignment[node.getI()]=assignment[matchOrder[l]];
 							assignment[matchOrder[l]]=node.getJ();
 							jToi[node.getJ()]=matchOrder[l];
@@ -66,9 +67,9 @@ public class GreedyHungarian {
 							matchOrder[index++]=node.getI();
 							break;
 						}
-							
+
 					}
-					
+
 				}
 			}
 
@@ -137,14 +138,14 @@ public class GreedyHungarian {
 		if (i < right) {
 			qSort(i, right);
 		}
-		
+
 	}
-	
+
 	public static boolean compare(Object o1, Object o2) {
 		if (((HeapNode) o1).getCost()>((HeapNode)o2).getCost())
-	    	  return true;
+			return true;
 		else 
-	      return false;
+			return false;
 	}
 
 	public static void quickSort(int left, int right) {    
@@ -384,7 +385,7 @@ public class GreedyHungarian {
 		map = new short[tuples][dims];
 		final_assignment = new int[tuples][k];
 		edges = new HeapNode[tuples*tuples];
-		
+
 		CensusParser tp = new CensusParser(inputFile, dims);
 		System.out.println(inputFile+" "+partition_size +" "+ k + "  "+ tuples);
 		try {
@@ -422,8 +423,6 @@ public class GreedyHungarian {
 				else
 					distinctValuesPerAssign = (LinkedList<Integer>[][]) new LinkedList[chunk_size][dims];
 
-			//PriorityBuffer cost = new PriorityBuffer(new HeapComparator());
-			HeapComparator hc = new HeapComparator();
 
 			double[][] array = computeCostMatrix();
 
@@ -503,7 +502,7 @@ public class GreedyHungarian {
 			for (int j=i; j<chunk_size; j++){
 
 				if (i==j){
-					
+
 					cost[i][j]=BIG;
 					HeapNode hn = new HeapNode(i,j,BIG);
 					edges[index++]=hn;

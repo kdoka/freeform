@@ -24,7 +24,7 @@ public class LDiversity_partitionBuckets {
 	static int partition_function;//type of bucket partitioning.
 	static int parts;//number of partitions per bucket.
 	//static int offset=0;
-	static byte[] dimension = new byte[dims];
+	static byte[] dimension = new byte[dims-1];
 	static short[][] map;// = new short[tuples][dims];
 	static short[][][] buckets; // = new short[l_param][tuples/l_param][dims];
 	static LinkedList<Integer>[][] distinctValuesPerAssign;
@@ -82,19 +82,21 @@ public class LDiversity_partitionBuckets {
 	//*******************************************//
 
 	public static void dimension_sort() { // sort the dimensions according to their effect to GCP
-		for (int i = 0;i < dims;i++) {
+		for (int i = 0;i < dims-1;i++) {
 			dimension[i] = (byte) i;
 		}
-		for (int i = 0; i < dims; i++) { // small domain, use bubble sort
-			if (i != dims-1){ //sort all except SA!!!
-				for (int j = 0; j < dims-i-1;j++) { // smaller range, put it the front
-					if (j != dims-1){ //sort all except SA!!!
-						if (cardinalities[dimension[j]] > cardinalities[dimension[j+1]]) {
-							byte temp = dimension[j];
-							dimension[j] = dimension[j+1];
-							dimension[j+1] = temp;
-						}
-					}
+		boolean swapped = true;
+		int i=0;
+		byte temp;
+		while (swapped) {
+			swapped = false;
+            i++;
+			for (int j = 0; j < dimension.length-i;j++) { // smaller range, put it the front
+				if (cardinalities[dimension[j]] > cardinalities[dimension[j+1]]) {
+					temp = dimension[j];
+					dimension[j] = dimension[j+1];
+					dimension[j+1] = temp;
+					swapped = true;
 				}
 			}
 		}
@@ -159,7 +161,7 @@ public class LDiversity_partitionBuckets {
 		int chunk_size; int partSA;
 		short[][] tmpBucket;
 		int[] loaded;
-		
+
 		if(parts == 0){
 			parts = 1;
 			chunk_sizes.add(b_size);
@@ -176,7 +178,7 @@ public class LDiversity_partitionBuckets {
 			}
 		}
 		loaded = new int[parts];
-		
+
 		for(int b=0; b<l_param; b++){//for every bucket
 			tmpBucket = new short[bucket_size][dims];
 			ArrayList<Integer> chg = bk.changeSA.get(b);
@@ -212,7 +214,7 @@ public class LDiversity_partitionBuckets {
 			buckets[b] = tmpBucket;
 		}
 	}
-	
+
 	/*
 	 * Option 1: bucket_partition2.
 	 * Partitions each bucket, maintaining the distribution of the most freq SA
@@ -225,7 +227,7 @@ public class LDiversity_partitionBuckets {
 		float ratio; int offsetB; int offsetB2; int offsetP;
 		int chunk_size; int partSA; int partSA2;
 		short[][] tmpBucket;
-		
+
 		if(parts == 0){
 			parts = 1;
 			chunk_sizes.add(b_size);
@@ -241,7 +243,7 @@ public class LDiversity_partitionBuckets {
 				chunk_sizes.addLast(b_size % partition_size);
 			}
 		}
-		
+
 		for(int b=0; b<l_param; b++){//for every bucket
 			tmpBucket = new short[bucket_size][dims];
 			//tuples of most freq SA:
@@ -344,7 +346,8 @@ public class LDiversity_partitionBuckets {
 		}
 
 		long midTime = System.currentTimeMillis();
-
+		
+		dimension_sort();//sort the dimensions
 		FastBuckets bk = new FastBuckets(l_param, tuples, dims, map, buckets);
 		buckets = bk.bucketization(dims-1);
 		//bk.printBuckets();
@@ -382,11 +385,11 @@ public class LDiversity_partitionBuckets {
 		} //else NO_PARTITION //default.
 		System.gc();
 		//bk.printBuckets();
-		
+
 		if((partition_function == 0) || (partition_function == 1)){ //partitioned buckets:
-				
+
 			for (int bucket_index=0; bucket_index<l_param; bucket_index++){
-					
+
 				int chunk_offset = 0;
 				for (int chunk_index=0; chunk_index<chunk_sizes.size(); chunk_index++){
 					chunk_size = chunk_sizes.get(chunk_index);
@@ -403,16 +406,16 @@ public class LDiversity_partitionBuckets {
 							distinctValuesPerAssign = (LinkedList<Integer>[][]) new LinkedList[chunk_size][dims];
 						}
 					}
-					
+
 					double[][] array = computeCostMatrix(buckets[bucket_index],buckets[(bucket_index+1)%l_param], bucket_index*bucket_size, chunk_offset, chunk_size);
 					int[] assignment = new int[array.length];
 					int times = 0;
-					
+
 					while (++times<l_param){
 						//start_of_hungarian = System.currentTimeMillis();
 						algo.hungarian(array, assignment);
 						//time_of_hungarian+=(System.currentTimeMillis() - start_of_hungarian);
-						
+
 						//System.out.println("time "+times);
 						for (int i=0; i<assignment.length; i++){
 							final_assignment[i+chunk_offset+bucket_index*bucket_size][times] = bucketToIndexMapping((bucket_index+times)%l_param,(chunk_offset+assignment[i]));
@@ -442,7 +445,7 @@ public class LDiversity_partitionBuckets {
 			}
 		}else{ //No partitioning:
 			for (int bucket_index=0; bucket_index<l_param; bucket_index++){
-				
+
 				//we need SA, too!
 				if (MIXED){
 					MinMaxPerAssign = new int[bucket_size][dims-1][2];
@@ -456,15 +459,15 @@ public class LDiversity_partitionBuckets {
 					}
 				}
 				double[][] array = computeCostMatrix(buckets[bucket_index],buckets[(bucket_index+1)%l_param], bucket_index*bucket_size, 0, bucket_size);
-				
+
 				int[] assignment = new int[array.length];
 				int times = 0;
-				
+
 				while (++times<l_param){
 					//start_of_hungarian = System.currentTimeMillis();
 					algo.hungarian(array, assignment);
 					//time_of_hungarian+=(System.currentTimeMillis() - start_of_hungarian);
-					
+
 					//System.out.println("time "+times);
 					for (int i=0; i<assignment.length; i++){
 						final_assignment[i+bucket_index*bucket_size][times] = bucketToIndexMapping((bucket_index+times)%l_param, assignment[i]);
@@ -491,7 +494,7 @@ public class LDiversity_partitionBuckets {
 				}
 			}
 		}//endif (partition or no_partition)
-		
+
 		long mTime = System.currentTimeMillis();
 
 		//**** BEGIN XUE MINGQIANG **** //
@@ -512,7 +515,7 @@ public class LDiversity_partitionBuckets {
 
 
 		System.out.println("Time: "+(endTime - startTime)+"ms  "+"\n Distortion "+ (double)(distortion/((dims-1)*tuples)));
-		
+
 		//Save Results:
 		FileWriter fw = null;
 		try{
@@ -524,7 +527,7 @@ public class LDiversity_partitionBuckets {
 				fw.write(bucket_size+" ");
 			}
 			fw.write((endTime - startTime)+" "+(endTime-mTime)+" "+
-					 +((double)(distortion/((dims-1)*tuples)))+"\n");
+					+((double)(distortion/((dims-1)*tuples)))+"\n");
 		}catch(IOException ioe){
 			System.err.println("IOException: " + ioe.getMessage());
 		}finally{
@@ -601,11 +604,11 @@ public class LDiversity_partitionBuckets {
 
 				if (MIXED){
 					array[i][j]=NCP_mixed(buckets[bucket_index][first+j], MinMaxPerAssign[i],
-										  distinctValuesPerAssign[i]);
+							distinctValuesPerAssign[i]);
 				}else
 					if (RANGE)
 						array[i][j]=NCP_numerical(buckets[bucket_index][first+j], MinMaxPerAssign[i],
-												  distinctValues1[i]);
+								distinctValues1[i]);
 					else
 						array[i][j]=NCP(buckets[bucket_index][first+j], (distinctValuesPerAssign[i]));
 
@@ -616,10 +619,10 @@ public class LDiversity_partitionBuckets {
 	///////////////////Mixed Representation//////////////	
 	private static double NCP_mixed(short[] tuple1, short[] tuple2){
 		double score=0.0;
-		
+
 		if (tuple1[dims-1] == tuple2[dims-1])
 			return BIG; //inf
-		
+
 		for (int i=0; i<dims-1; i++){
 			if (i==0 || (i==2&&dims!=3)){
 				score+=(double)Math.abs(tuple1[i]-tuple2[i])/(double)(cardinalities[i]-1);
@@ -637,11 +640,11 @@ public class LDiversity_partitionBuckets {
 		double score=0.0;
 		int min;
 		int max;
-		
+
 		LinkedList<Integer> distinctValues2 = distinctValuesPerDim[dims-1];
 		if (distinctValues2.contains((int)tuple[dims-1]))
 			return BIG; //inf
-		
+
 		for (int i=0; i<dims-1; i++){
 			if (i==0 || (i==2&&dims!=3)){
 				int[] distinctValues = MinMaxPerDim[i];
@@ -665,7 +668,7 @@ public class LDiversity_partitionBuckets {
 	}
 	private static double NCP_mixed(int[][] MinMaxPerDim, LinkedList<Integer>[] distinctValuesPerDim){
 		double score=0.0;
-		
+
 		for (int i=0; i<dims-1; i++){
 			if (i==0 || (i==2&&dims!=3)){
 				int[] distinctValues = MinMaxPerDim[i];
@@ -694,8 +697,8 @@ public class LDiversity_partitionBuckets {
 			}else{
 				LinkedList<Integer> distValuesPerDim = dValues[i];
 				if (distValuesPerDim != null)
-				if (!distValuesPerDim.contains((int)newTuple[i]))
-					distValuesPerDim.add((int)newTuple[i]);
+					if (!distValuesPerDim.contains((int)newTuple[i]))
+						distValuesPerDim.add((int)newTuple[i]);
 			}
 
 		}
@@ -706,26 +709,26 @@ public class LDiversity_partitionBuckets {
 	///////////////////Range Representation//////////////			
 	private static double NCP_numerical(short[] tuple1, short[] tuple2){
 		double score=0.0;
-		
+
 		if (tuple1[dims-1] == tuple2[dims-1])
 			return BIG; //inf
-		
+
 		for (int i=0; i<dims-1; i++){
 			score+=(double)Math.abs(tuple1[i]-tuple2[i])/(double)(cardinalities[i]-1);
 
 		}
 		return score;
 	}
-	
+
 	private static double NCP_numerical(short[] tuple, int[][] MinMaxPerDim,
-										LinkedList<Integer> distinctValues2){
+			LinkedList<Integer> distinctValues2){
 		double score=0.0;
 		int min;
 		int max;
-		
+
 		if (distinctValues2.contains((int)tuple[dims-1]))
 			return BIG; //inf
-		
+
 		for (int i=0; i<dims-1; i++){
 			int[] distinctValues = MinMaxPerDim[i];
 			min = distinctValues[0];
@@ -739,7 +742,7 @@ public class LDiversity_partitionBuckets {
 		}
 		return score;
 	}
-	
+
 	private static double NCP_numerical(int[][] MinMaxPerDim){
 		double score=0.0;
 		for (int i=0; i<dims-1; i++){
@@ -749,7 +752,7 @@ public class LDiversity_partitionBuckets {
 		}
 		return score;
 	}
-	
+
 	private static void findSet_numerical(int assign_number, short[] newTuple){
 		int[][] MinMaxPerDim = MinMaxPerAssign[assign_number];
 		for (int i=0; i<MinMaxPerDim.length; i++){
@@ -783,17 +786,17 @@ public class LDiversity_partitionBuckets {
 
 	private static double NCP(short[] tuple, LinkedList<Integer>[] distinctValuesPerDim){
 		double score=0.0;
-		
+
 		LinkedList<Integer> distinctValues2 = distinctValuesPerDim[dims-1];
 		if (distinctValues2.contains((int)tuple[dims-1]))
 			return BIG; //inf
-		
+
 		for (int i=0; i<dims-1; i++){
-				LinkedList<Integer> distinctValues = distinctValuesPerDim[i];
-				if (!distinctValues.contains((int)tuple[i]))
-					score+=(double)(distinctValues.size())/(double)(cardinalities[i]-1);
-				else 
-					score+=(double)(distinctValues.size()-1)/(double)(cardinalities[i]-1);
+			LinkedList<Integer> distinctValues = distinctValuesPerDim[i];
+			if (!distinctValues.contains((int)tuple[i]))
+				score+=(double)(distinctValues.size())/(double)(cardinalities[i]-1);
+			else 
+				score+=(double)(distinctValues.size()-1)/(double)(cardinalities[i]-1);
 		}
 		return score;
 	}
@@ -802,7 +805,7 @@ public class LDiversity_partitionBuckets {
 		for (int i=0; i<dims-1; i++){
 			LinkedList<Integer> distinctValues = distinctValuesPerDim[i];
 			score+=(double)(distinctValues.size()-1)/(double)(cardinalities[i]-1);
-			
+
 		}
 		return score;
 	}

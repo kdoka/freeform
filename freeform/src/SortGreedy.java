@@ -488,9 +488,7 @@ public class SortGreedy {
 				else
 					distinctValuesPerAssign = (LinkedList<Integer>[][]) new LinkedList[chunk_size][dims];
 
-			//PriorityBuffer cost = new PriorityBuffer(new HeapComparator());
-			HeapComparator hc = new HeapComparator();
-
+			
 			double[][] array = computeCostMatrix();
 
 			int[] assignment = new int[array.length];

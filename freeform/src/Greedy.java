@@ -78,111 +78,38 @@ public class Greedy {
 	}
 
 	private static int[] greedyAssign(double[][] array, int[] assignment) {
-		long backtrace_start = System.currentTimeMillis();
+		int[] matchOrder = new int[chunk_size];
+		//int[] iToj = new int[chunk_size];
 		int[] jToi = new int[chunk_size];
+		int index = 0;
 		Arrays.fill(assignment, -1);
 		Arrays.fill(jToi, -1);
-		HeapNode node = root;
-		while (node!=null){
-			//HeapNode node = (HeapNode) edges[i];
+		for (int i=0; i<edges.length; i++){
+			HeapNode node = (HeapNode) edges[i];
+			/*if (node.getI() == 906)
+				System.out.println(node.getJ());*/
 			if (assignment[node.getI()]==-1 && jToi[node.getJ()]==-1){
-				assignment[node.getI()]=node.getJ();
-				jToi[node.getJ()]=node.getI();
-			}
-			node = node.getSuc();
-		}
-		
-		for (int index = 0; index<chunk_size; index++){
-			boolean swap_done = false;
-			if (assignment[index]==-1){
-				System.out.println(index);
-				for (int step=1; step<chunk_size/2; step++){
-					int possible_i = (chunk_size+index-step)%chunk_size;
-					int possible_j = assignment[possible_i];
-					if (possible_j != -1){
-						if (array[index][possible_j]!=BIG){
-							for (int l=0; l<chunk_size; l++){
-								if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-									assignment[index]=possible_j;
-									assignment[possible_i]=l;
-									jToi[l]=possible_i;
-									jToi[possible_j]=index;
-									swap_done = true;
-									break;
-								}
-							}
-							/*for (int step2 = 1; step2<chunk_size/2; step2++){
-								int l = (chunk_size+possible_j-step2)%chunk_size;			
-
-								if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-									assignment[index]=possible_j;
-									assignment[possible_i]=l;
-									jToi[l]=possible_i;
-									jToi[possible_j]=index;
-									swap_done = true;
-									break;
-								}
-
-								l=(possible_j+step2)%chunk_size;
-								if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-									assignment[index]=possible_j;
-									assignment[possible_i]=l;
-									jToi[l]=possible_i;
-									jToi[possible_j]=index;
-									swap_done = true;
-									break;
-								}
-							}	*/
+				if (node.getCost()!= BIG){
+					assignment[node.getI()]=node.getJ();
+					jToi[node.getJ()]=node.getI();
+					matchOrder[index++]=node.getI();
+				}else{
+					for (int l=index-1; l>=0; l--){
+						if (array[matchOrder[l]][node.getJ()]!=BIG && array[node.getI()][assignment[matchOrder[l]]]!=BIG){
+							assignment[node.getI()]=assignment[matchOrder[l]];
+							assignment[matchOrder[l]]=node.getJ();
+							jToi[node.getJ()]=matchOrder[l];
+							jToi[assignment[node.getI()]]=node.getI();
+							matchOrder[index++]=node.getI();
+							break;
 						}
-					}
-					if (swap_done)
-						break;
-					else {
-						possible_i = (index+step)%chunk_size;
-						possible_j = assignment[possible_i];
-						if (possible_j != -1){
-							if (array[index][possible_j]!=BIG){
-								for (int l=0; l<chunk_size; l++){
-									if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-										assignment[index]=possible_j;
-										assignment[possible_i]=l;
-										jToi[l]=possible_i;
-										jToi[possible_j]=index;
-										swap_done = true;
-										break;
-									}
-								}
-								/*for (int step2 = 1; step2<chunk_size/2; step2++){
-									int l = (chunk_size+possible_j-step2)%chunk_size;			
 
-									if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-										assignment[index]=possible_j;
-										assignment[possible_i]=l;
-										jToi[l]=possible_i;
-										jToi[possible_j]=index;
-										swap_done = true;
-										break;
-									}
-
-									l=(possible_j+step2)%chunk_size;
-									if (jToi[l]==-1 && array[possible_i][l]!=BIG){
-										assignment[index]=possible_j;
-										assignment[possible_i]=l;
-										jToi[l]=possible_i;
-										jToi[possible_j]=index;
-										swap_done = true;
-										break;
-									}
-								}*/	
-							}
-						}
 					}
-					if (swap_done)
-						break;
+
 				}
 			}
+
 		}
-		backtrace_time += (System.currentTimeMillis()-backtrace_start);
 		return assignment;
 	}
 	//*******************************************//
@@ -497,16 +424,7 @@ public class Greedy {
 			double[][] array = computeCostMatrix();
 			edge_sort_start = System.currentTimeMillis();
 			qSort(0,chunk_size*chunk_size-chunk_size-1);//Collections.sort(edges, new HeapComparator());
-			edges[0].setPred(null);
-			edges[0].setSuc(edges[1]);
-			for (int i = 1; i<edges.length-1; i++){
-				edges[i].setPred(edges[i-1]);
-				edges[i].setSuc(edges[i+1]);
-			}
-			edges[edges.length-1].setPred(edges[edges.length-2]);
-			edges[edges.length-1].setSuc(null);
-			root = edges[0];
-			edge_sort_time += System.currentTimeMillis() - edge_sort_start;
+			
 
 			int[] assignment = new int[array.length];
 
@@ -662,12 +580,7 @@ public class Greedy {
 
 			if (final_assignment[offset+i][times]==j){
 				array[i][j]=BIG;
-				if (hn.getPred()!=null)
-					hn.getPred().setSuc(hn.getSuc()) ;
-				else
-					root = hn.getSuc();
-				if (hn.getSuc()!=null)
-					hn.getSuc().setPred(hn.getPred());
+				
 				hn.cost = BIG;
 				//hn = hn.getSuc();
 
@@ -690,32 +603,7 @@ public class Greedy {
 						array[i][j]=c;
 						hn.cost = c;
 					}
-				HeapNode insSort = hn;
-				//HeapNode tmp = hn;
-				//hn = hn.getSuc();
-				boolean need_swap = false;
-				while (insSort.getPred()!=null){
-					if (hn.getCost()<insSort.getPred().getCost()){
-						insSort = insSort.getPred();
-						need_swap = true;
-					}
-					else
-						break;
-				}
-				if (need_swap){
-					//if (lala++==900000)
-						System.out.println(lala++);
-					if (hn.getPred()!=null)
-						hn.getPred().setSuc(hn.getSuc());
-					if (hn.getSuc()!=null)
-						hn.getSuc().setPred(hn.getPred());
-					hn.setPred(insSort.getPred());
-					if (insSort.getPred()!=null)
-						insSort.getPred().setSuc(hn);
-					hn.setSuc(insSort);
-					insSort.setPred(hn);
-					
-				}
+				
 			}
 
 

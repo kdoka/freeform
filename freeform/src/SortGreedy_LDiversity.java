@@ -152,24 +152,26 @@ public class SortGreedy_LDiversity {
 	//	METHODS to pre-process the data			//
 	//*******************************************//
 
-	public static void dimension_sort() { // sort the dimensions according to their effect to GCP
-		for (int i = 0;i < dims;i++) {
-			dimension[i] = (byte) i;
-		}
-		for (int i = 0; i < dims; i++) { // small domain, use bubble sort
-			if (i != dims-1){ //sort all except SA!!!
-				for (int j = 0; j < dims-i-1;j++) { // smaller range, put it the front
-					if (j != dims-1){ //sort all except SA!!!
-						if (cardinalities[dimension[j]] > cardinalities[dimension[j+1]]) {
-							byte temp = dimension[j];
-							dimension[j] = dimension[j+1];
-							dimension[j+1] = temp;
-						}
+		public static void dimension_sort() { // sort the dimensions according to their effect to GCP
+			for (int i = 0;i < dims-1;i++) {
+				dimension[i] = (byte) i;
+			}
+			boolean swapped = true;
+			int i=0;
+			byte temp;
+			while (swapped) {
+				swapped = false;
+	            i++;
+				for (int j = 0; j < dimension.length-i;j++) { // smaller range, put it the front
+					if (cardinalities[dimension[j]] > cardinalities[dimension[j+1]]) {
+						temp = dimension[j];
+						dimension[j] = dimension[j+1];
+						dimension[j+1] = temp;
+						swapped = true;
 					}
 				}
 			}
 		}
-	}
 
 	// return true if data x > data y
 	public static boolean compare_data(short[] x, short[] y) {
@@ -449,9 +451,9 @@ public class SortGreedy_LDiversity {
 				}
 			}
 		}
-
+		
 		long midTime = System.currentTimeMillis();
-
+		dimension_sort();//sort the dimensions
 		FastBuckets bk = new FastBuckets(l_param, tuples, dims, map, buckets);
 		buckets = bk.bucketization(dims-1);
 		//bk.printBuckets();
@@ -463,10 +465,7 @@ public class SortGreedy_LDiversity {
 
 		map=null; //delete map
 		System.gc();
-		//-----------------------------------------------------------//		
-		//-------needed for greedy algorithms-------------
-		dimension_sort();
-		//-------needed for greedy algorithms-------------
+		
 		final_assignment = new int[tuples][l_param];
 
 		double distortion = 0.0;
