@@ -62,7 +62,7 @@ public class Census2Zipfian {
 		//Save Results:
 		FileWriter fw = null;
 		try{
-			String outfile = "./zipfData"+tuples+".txt";
+			String outfile = "./zipfDataU"+theta+"_"+tuples+".txt";
 			fw = new FileWriter(outfile,true); //true == append
 			for (int i=0; i<map.length; i++){
 				for (int j=0; j<dims-1; j++){

@@ -411,6 +411,8 @@ public class Greedy_LDiversity {
 		} //else NO_PARTITION //default.
 		System.gc();
 		//bk.printBuckets();
+		long preprocessingTime = System.currentTimeMillis()-startTime;
+		long parallelStartTime = System.currentTimeMillis();
 		
 		if((partition_function == 0) || (partition_function == 1)){ //partitioned buckets:
 				
@@ -529,6 +531,7 @@ public class Greedy_LDiversity {
 			}
 		}//endif (partition or no_partition)
 
+		long mTime = System.currentTimeMillis();
 		//**** BEGIN XUE MINGQIANG **** //
 		// this call returns a random assignment generated from the k-regular matching graph
 		int [] rand_A = Randomization.run(final_assignment, 0, final_assignment.length, l_param);
@@ -538,12 +541,12 @@ public class Greedy_LDiversity {
 		//System.out.println("The winning assignment after "+index+" runs (" + sumType + " sum) is:\n");	
 
 
-		for (int i=0; i<final_assignment.length; i++){
+		/*for (int i=0; i<final_assignment.length; i++){
 			for (int j=0; j<l_param; j++){
 				System.out.print((final_assignment[i][j] +1)+" ");
 			}
 			System.out.println();
-		}
+		}*/
 
 
 		System.out.println("Time: "+(endTime - startTime)+"ms  "+"\n Distortion "+ (double)(distortion/((dims-1)*tuples)));
@@ -552,14 +555,14 @@ public class Greedy_LDiversity {
 		FileWriter fw = null;
 		try{
 			fw = new FileWriter("./GreedyResults.txt",true); //true == append
-			fw.write(tuples+" "+l_param+" ");
+			fw.write(inputFile+" "+tuples+" d "+dims+" l "+l_param+" ");
 			if((partition_function == 0) || (partition_function == 1)){
 				fw.write(partition_size+" ");
 			}else{
 				fw.write(bucket_size+" ");
 			}
-			fw.write((endTime - startTime)+" "
-					 +((double)(distortion/((dims-1)*tuples)))+"\n");
+			fw.write(preprocessingTime+(mTime-parallelStartTime)/chunk_sizes.size() + (endTime - mTime)+" "+(endTime-mTime)+" "+
+					+((double)(distortion/((dims-1)*tuples)))+"\n");
 		}catch(IOException ioe){
 			System.err.println("IOException: " + ioe.getMessage());
 		}finally{
