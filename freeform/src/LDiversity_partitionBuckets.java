@@ -10,8 +10,8 @@ public class LDiversity_partitionBuckets {
 	private static final boolean MIXED = true;
 	//private static final boolean OPTIMIZATION = true;
 	private static double maxCost = BIG;//0.5436267458828434;
-	//static byte[] cardinalities = {79, 2, 17, 6, 9, 10, 83, 51};
-	static byte[] cardinalities ={14,2,6};
+	static byte[] cardinalities = {79, 2, 17, 6, 9, 10, 83, 51};
+	//static byte[] cardinalities ={14,2,6};
 	//***l*div***//
 	//static int k;// = 10;
 	static int l_param;// = 10;
