@@ -10,8 +10,8 @@ public class LDiversity_partitionBuckets {
 	private static final boolean MIXED = true;
 	//private static final boolean OPTIMIZATION = true;
 	private static double maxCost = BIG;//0.5436267458828434;
-	static byte[] cardinalities = {79, 2, 17, 6, 9, 10, 83, 51};
-	//static byte[] cardinalities ={15,2};
+	//static byte[] cardinalities = {79, 2, 17, 6, 9, 10, 83, 51};
+	static byte[] cardinalities ={14,2,6};
 	//***l*div***//
 	//static int k;// = 10;
 	static int l_param;// = 10;
@@ -353,7 +353,7 @@ public class LDiversity_partitionBuckets {
 		dimension_sort();//sort the dimensions
 		FastBuckets2 bk = new FastBuckets2(l_param, tuples, dims, map, buckets, threshold);
 		buckets = bk.bucketization(dims-1);
-		//bk.printBuckets();
+		bk.printBuckets();
 
 		long bucketEndTime = System.currentTimeMillis();
 		System.out.println("Time of reading dataset: "+(midTime - startTime)+" miliseconds.");
@@ -370,9 +370,6 @@ public class LDiversity_partitionBuckets {
 
 		final_assignment = new int[tuples][l_param];
 
-		long matchTime = System.currentTimeMillis();
-		long time_of_hungarian = 0;
-		long start_of_hungarian = 0;
 		double distortion = 0.0;
 		bucket_size = bk.bucketSize;
 		int chunk_size;
@@ -388,6 +385,9 @@ public class LDiversity_partitionBuckets {
 		} //else NO_PARTITION //default.
 		System.gc();
 		//bk.printBuckets();
+		
+		long preprocessingTime = System.currentTimeMillis()-startTime;
+		long parallelStartTime = System.currentTimeMillis();
 
 		if((partition_function == 0) || (partition_function == 1)){ //partitioned buckets:
 
@@ -508,7 +508,7 @@ public class LDiversity_partitionBuckets {
 
 		//System.out.println("The winning assignment after "+index+" runs (" + sumType + " sum) is:\n");	
 
-
+		//Print final assignment
 		for (int i=0; i<final_assignment.length; i++){
 			for (int j=0; j<l_param; j++){
 				System.out.print((final_assignment[i][j] +1)+" ");
@@ -523,13 +523,13 @@ public class LDiversity_partitionBuckets {
 		FileWriter fw = null;
 		try{
 			fw = new FileWriter("./LDivResults_new.txt",true); //true == append
-			fw.write(tuples+" "+l_param+" ");
+			fw.write(inputFile+" "+tuples+" d "+dims+" l "+l_param+" threshold "+threshold);
 			if((partition_function == 0) || (partition_function == 1)){
 				fw.write(partition_size+" ");
 			}else{
 				fw.write(bucket_size+" ");
 			}
-			fw.write("threshold"+threshold+" "+(endTime - startTime)+" "+(endTime-mTime)+" "+
+			fw.write(preprocessingTime+(mTime-parallelStartTime)/chunk_sizes.size() + (endTime - mTime)+" "+(endTime-mTime)+" "+
 					+((double)(distortion/((dims-1)*tuples)))+"\n");
 		}catch(IOException ioe){
 			System.err.println("IOException: " + ioe.getMessage());

@@ -263,7 +263,7 @@ public class FastBuckets2 {
 				int best = i;
 				double cost = getMaxNCP(empty, tmp, offset, j); //or getAvgNCP
 				double maxcost = cost;
-				System.out.println(j+" "+cost);
+				//System.out.println(j+" "+cost);
 				while (cost < threshold){
 					j = getNextEmptyBucket(empty, j, remains);
 					if (j == -1){ //not found.
@@ -271,7 +271,7 @@ public class FastBuckets2 {
 						break;
 					}
 					cost = getMaxNCP(empty, tmp, offset, j); //or getAvgNCP
-					System.out.println(j+" "+cost);
+					//System.out.println(j+" "+cost);
 					if (cost > maxcost){
 						maxcost = cost;
 						best = j;
@@ -280,7 +280,7 @@ public class FastBuckets2 {
 				//i = j;
 				i  = best;
 				cost = getMaxNCP(empty, tmp, offset, i); //or getAvgNCP
-				System.out.println("finally: "+i+" "+cost);
+				//System.out.println("finally: "+i+" "+cost);
 				if(empty[i] < remains){
 					fits = empty[i];
 				}else{
