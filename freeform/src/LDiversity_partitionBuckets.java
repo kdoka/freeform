@@ -353,7 +353,7 @@ public class LDiversity_partitionBuckets {
 		dimension_sort();//sort the dimensions
 		FastBuckets2 bk = new FastBuckets2(l_param, tuples, dims, map, buckets, threshold);
 		buckets = bk.bucketization(dims-1);
-		bk.printBuckets();
+		//bk.printBuckets();
 
 		long bucketEndTime = System.currentTimeMillis();
 		System.out.println("Time of reading dataset: "+(midTime - startTime)+" miliseconds.");
@@ -509,12 +509,12 @@ public class LDiversity_partitionBuckets {
 		//System.out.println("The winning assignment after "+index+" runs (" + sumType + " sum) is:\n");	
 
 		//Print final assignment
-		for (int i=0; i<final_assignment.length; i++){
+		/*for (int i=0; i<final_assignment.length; i++){
 			for (int j=0; j<l_param; j++){
 				System.out.print((final_assignment[i][j] +1)+" ");
 			}
 			System.out.println();
-		}
+		}*/
 
 
 		System.out.println("Time: "+(endTime - startTime)+"ms  "+"\n Distortion "+ (double)(distortion/((dims-1)*tuples)));
@@ -523,7 +523,7 @@ public class LDiversity_partitionBuckets {
 		FileWriter fw = null;
 		try{
 			fw = new FileWriter("./LDivResults_new.txt",true); //true == append
-			fw.write(inputFile+" "+tuples+" d "+dims+" l "+l_param+" threshold "+threshold);
+			fw.write(inputFile+" "+tuples+" d "+dims+" l "+l_param+" threshold "+threshold+" ");
 			if((partition_function == 0) || (partition_function == 1)){
 				fw.write(partition_size+" ");
 			}else{

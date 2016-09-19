@@ -37,6 +37,7 @@ public class SortGreedy {
 
 	static long backtrace_time;
 	static long cost_matrix_time = 0;;
+	static double threshold;
 
 	//*******************************************//
 	//METHODS THAT PERFORM ARRAY-PROCESSING TASKS//

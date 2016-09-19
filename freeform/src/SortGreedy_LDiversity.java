@@ -36,7 +36,7 @@ public class SortGreedy_LDiversity {
 	static LinkedList<Integer> chunk_sizes = new LinkedList<Integer>();
 	static HeapNode[] edges;
 	static int edge_size;
-
+	static double threshold;
 	//*******************************************//
 		//METHODS THAT PERFORM ARRAY-PROCESSING TASKS//
 		//*******************************************//
@@ -262,7 +262,7 @@ public class SortGreedy_LDiversity {
 	 * Partitions each bucket, while maintaining SA distributions
 	 * Note: This is the correct one!
 	 */
-	static void bucket_partition(int b_size, FastBuckets bk){
+	static void bucket_partition(int b_size, FastBuckets2 bk){
 		int parts = b_size/partition_size; //#partitions per bucket
 		double ratio; int offsetB; int offsetP;
 		int chunk_size; int partSA;
@@ -329,7 +329,7 @@ public class SortGreedy_LDiversity {
 	 * Note: It preserves better data utility, but may lead to a deadlock
 	 * (chunk assignments that have 50% the same SAs.)
 	 */
-	static void bucket_partition2(int b_size, FastBuckets bk){
+	static void bucket_partition2(int b_size, FastBuckets2 bk){
 		int parts = b_size/partition_size; //#partitions per bucket
 		float ratio; int offsetB; int offsetB2; int offsetP;
 		int chunk_size; int partSA; int partSA2;
@@ -396,7 +396,7 @@ public class SortGreedy_LDiversity {
 
 	public static void main(String[] args) 	{
 
-		if (args.length!=7){
+		if (args.length!=8){
 			System.out.println("\nUsage:   java LDiversity inFile n SA l part_size part_option");
 			System.out.println("\t inFile: input file name (path included).");
 			System.out.println("\t n: number of tuples in inFile.");
@@ -407,6 +407,7 @@ public class SortGreedy_LDiversity {
 			System.out.println("\t part_option: 0 (safer, keeps all SAs distributions), or");
 			System.out.println("\t              1 (better utility, but may cause problems), or ");
 			System.out.println("\t              2 (no bucket partitioning).\n");
+			System.out.println("\t th: distance threshold to place chunk in bucket, in [0, 1].");
 			return;
 		}
 
@@ -417,7 +418,8 @@ public class SortGreedy_LDiversity {
 		l_param = Integer.parseInt(args[4]); // l
 		partition_size = Integer.parseInt(args[5]);
 		partition_function = Integer.parseInt(args[6]);
-
+		threshold = Double.parseDouble(args[7]);
+		
 		int modl = (tuples % l_param);
 		if (modl > 0){
 			//change n (#tuples), so that it is divided by l:
@@ -454,7 +456,7 @@ public class SortGreedy_LDiversity {
 		
 		long midTime = System.currentTimeMillis();
 		dimension_sort();//sort the dimensions
-		FastBuckets bk = new FastBuckets(l_param, tuples, dims, map, buckets);
+		FastBuckets2 bk = new FastBuckets2(l_param, tuples, dims, map, buckets,threshold);
 		buckets = bk.bucketization(dims-1);
 		//bk.printBuckets();
 
@@ -623,7 +625,7 @@ public class SortGreedy_LDiversity {
 		FileWriter fw = null;
 		try{
 			fw = new FileWriter("./SortGreedyResults.txt",true); //true == append
-			fw.write(inputFile+" "+tuples+" d "+dims+" l "+l_param+" ");
+			fw.write(inputFile+" "+tuples+" d "+dims+" l "+l_param+" "+" threshold "+threshold+" ");
 			if((partition_function == 0) || (partition_function == 1)){
 				fw.write(partition_size+" ");
 			}else{
